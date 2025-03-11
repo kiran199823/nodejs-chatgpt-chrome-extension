@@ -12,26 +12,23 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((error) => console.log(error));
 
+const userIdSchema = new mongoose.Schema({
+  userId: String,
+});
+
 app.get("/", (req, res) => {
   res.send("hello");
 });
 
-const ItemSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  pasword: String,
-});
+const userIdModel = mongoose.model("tree_structure", userIdSchema);
 
-const ItemModel = mongoose.model("items", ItemSchema);
-
-app.get("/add-item", async (req, res) => {
-  const item = new ItemModel({
-    name: "Item 1",
-    email: "email2",
-    pasword: "password",
+app.post("/cfe/ui", async (req, res) => {
+  const fetchedId = req.query.userId;
+  const userId = new userIdModel({
+    userId: fetchedId,
   });
-  await item.save();
-  res.send("Item added");
+  await userId.save();
+  res.send("User added");
 });
 
 app.listen(PORT, () => {
