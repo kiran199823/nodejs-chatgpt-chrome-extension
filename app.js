@@ -1,7 +1,8 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const dotenv = require("dotenv");
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+import { findFolderAndUpdate, responseStatusDetails } from "./utils.js";
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -15,30 +16,106 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((error) => console.log(error));
 
-const userIdSchema = new mongoose.Schema({
-  userId: String,
+const folderSchema = new mongoose.Schema({
+  u: { type: String, required: true },
+  fc: Number,
+  cc: Number,
+  f: [],
 });
+
+const addUser = async (userId, res) => {
+  const addUserId = new folderModel({ u: userId, fc: 0, cc: 0, f: [] });
+  const { u: addedUserId } = await addUserId.save();
+
+  if (!addedUserId) {
+    return responseStatusDetails(res).internalServerError();
+  }
+
+  return responseStatusDetails(res).success();
+};
+
+const addFolders = async (dataBaseResponse, folderDetails, folderCount) => {
+  const { name: folderName, parentFolders = [] } = folderDetails;
+
+  if (!parentFolders.length && !folderCount) {
+    const lengthOfFolder = dataBaseResponse.f.push({
+      n: folderName,
+      i: folderCount + 1,
+      f: [],
+      ch: [],
+    });
+    if (lengthOfFolder) {
+      dataBaseResponse.fc = folderCount + 1;
+      return true;
+    }
+    return;
+  } else {
+    return findFolderAndUpdate(
+      parentFolders,
+      folderName,
+      folderCount,
+      dataBaseResponse
+    );
+  }
+};
 
 app.get("/", (req, res) => {
   res.send("hello");
 });
 
-const userIdModel = mongoose.model("tree_structure", userIdSchema);
+// Add folders
+const folderModel = mongoose.model("tree_structures", folderSchema);
+app.post("/cfe/add-folder", async (req, res) => {
+  const { userId, folder = [] } = req.body;
 
-app.post("/cfe/ui", async (req, res) => {
-  const fetchedId = req.body.userId;
-  if (!fetchedId) {
-    return res.status(400).send({ message: "Bad request" });
+  if (!userId || (folder && folder.length === 0) || !folder) {
+    return responseStatusDetails(res).badRequestError();
   }
-  const userModel = new userIdModel({
-    userId: fetchedId,
-  });
-  const { userId } = await userModel.save();
 
-  if (!userId) {
-    return res.status(500).send({ message: "Server error" });
+  const dataBaseResponse = await folderModel.find({ u: userId });
+
+  if (!dataBaseResponse?.length) {
+    return addUser(userId, res);
+  } else if (dataBaseResponse[0]?.u === userId && folder[0].name) {
+    const { fc: folderCount } = dataBaseResponse[0];
+    const status = await addFolders(
+      dataBaseResponse[0],
+      folder[0],
+      folderCount,
+      res
+    );
+    if (!status) return responseStatusDetails(res).internalServerError();
+    dataBaseResponse[0].save();
+    return responseStatusDetails(res).success();
   }
-  res.status(200).send({ message: "User added" });
+});
+
+//Add chats
+app.post("/cfe/add-chat", async (req, res) => {
+  const { userId, chats = [], parentFolders = [] } = req.body;
+  console.log("req.body: ", req.body);
+  if (!userId || !chats.length)
+    return responseStatusDetails(res).badRequestError();
+
+  const dataBaseResponse = await folderModel.find({ u: userId });
+  console.log("dataBaseResponse: ", dataBaseResponse);
+  if (!dataBaseResponse) return responseStatusDetails(res).badRequestError();
+
+  if (chats.length) {
+    const { cc: chatCount } = dataBaseResponse[0];
+    const status = await findFolderAndUpdate(
+      parentFolders,
+      null,
+      null,
+      dataBaseResponse[0],
+      true,
+      chatCount,
+      chats
+    );
+    if (!status) return responseStatusDetails(res).internalServerError();
+    await dataBaseResponse[0].save();
+    return responseStatusDetails(res).success();
+  }
 });
 
 app.listen(PORT, () => {
