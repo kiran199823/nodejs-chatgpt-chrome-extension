@@ -68,7 +68,7 @@ const folderModel = mongoose.model("tree_structures", folderSchema);
 app.post("/cfe/add-folder", async (req, res) => {
   const { userId, folder = [] } = req.body;
 
-  if (!userId || (folder && folder.length === 0) || !folder) {
+  if (!userId) {
     return responseStatusDetails(res).badRequestError();
   }
 
@@ -88,17 +88,16 @@ app.post("/cfe/add-folder", async (req, res) => {
     dataBaseResponse[0].save();
     return responseStatusDetails(res).success();
   }
+  return responseStatusDetails(res).badRequestError();
 });
 
 //Add chats
 app.post("/cfe/add-chat", async (req, res) => {
   const { userId, chats = [], parentFolders = [] } = req.body;
-  console.log("req.body: ", req.body);
   if (!userId || !chats.length)
     return responseStatusDetails(res).badRequestError();
 
   const dataBaseResponse = await folderModel.find({ u: userId });
-  console.log("dataBaseResponse: ", dataBaseResponse);
   if (!dataBaseResponse) return responseStatusDetails(res).badRequestError();
 
   if (chats.length) {
