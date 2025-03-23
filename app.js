@@ -98,7 +98,7 @@ app.post("/cfe/add-chat", async (req, res) => {
     return responseStatusDetails(res).badRequestError();
 
   const dataBaseResponse = await folderModel.find({ u: userId });
-  if (!dataBaseResponse) return responseStatusDetails(res).badRequestError();
+  if (!dataBaseResponse) return responseStatusDetails(res).notFound();
 
   if (chats.length) {
     const { cc: chatCount } = dataBaseResponse[0];
@@ -115,6 +115,19 @@ app.post("/cfe/add-chat", async (req, res) => {
     await dataBaseResponse[0].save();
     return responseStatusDetails(res).success();
   }
+});
+
+app.post("/cfe/folder-list", async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return responseStatusDetails(res).badRequestError();
+
+  const dataBaseResponse = await folderModel.find({ u: userId });
+
+  if (!dataBaseResponse.length) return responseStatusDetails(res).notFound();
+
+  const responseBody = dataBaseResponse[0].f;
+
+  responseStatusDetails(res).success(responseBody);
 });
 
 app.listen(PORT, () => {

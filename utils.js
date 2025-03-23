@@ -48,9 +48,11 @@ export async function findFolderAndUpdate(
 
 export function responseStatusDetails(res) {
   return {
-    success: () => res.status(200).send({ message: "Success" }),
+    success: (responseBody = "") =>
+      res.status(200).send({ message: "Success", responseBody }),
     internalServerError: () =>
       res.status(500).send({ message: "Internal server error" }),
     badRequestError: () => res.status(400).send({ message: "Bad request" }),
+    notFound: () => res.status(404).send({ message: "Not found" }),
   };
 }
