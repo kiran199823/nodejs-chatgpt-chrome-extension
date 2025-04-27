@@ -46,6 +46,49 @@ export async function findFolderAndUpdate(
   return false;
 }
 
+export async function findToDeleteOrRename(
+  dataBase,
+  parentFolders = [],
+  folderId,
+  actionName,
+  replaceName = "",
+  chatId = null
+) {
+  let folderPath = dataBase;
+  if (parentFolders?.length > 0) {
+    parentFolders?.map((parentId) => {
+      folderPath = folderPath?.f?.find((folder) => folder?.i === parentId);
+    });
+  }
+  const folderIndex = folderPath?.f?.findIndex(
+    (folder) => folder?.i === folderId
+  );
+  if (folderIndex !== -1) {
+    if (actionName === "deleteFolder") {
+      folderPath?.f?.splice(folderIndex, 1);
+      dataBase.markModified("f");
+
+      return true;
+    } else if (actionName === "removeChat") {
+      const chatIndex = folderPath?.f?.[folderIndex]?.ch?.find(
+        (chat) => chat?.ci === chatId
+      );
+      folderPath?.f?.[folderIndex]?.ch?.splice(chatIndex, 1);
+      dataBase.markModified("f");
+
+      return true;
+    } else if (actionName === "renameFolder") {
+      const folderToModify = folderPath?.f?.[folderIndex];
+      folderToModify.n = replaceName !== "" ? replaceName : folderToModify?.n;
+      folderPath?.f?.splice(folderIndex, 1, folderToModify);
+      dataBase.markModified("f");
+
+      return true;
+    }
+  }
+  return false;
+}
+
 export function responseStatusDetails(res) {
   return {
     success: (responseBody = "") =>

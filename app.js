@@ -2,7 +2,11 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
-import { findFolderAndUpdate, responseStatusDetails } from "./utils.js";
+import {
+  findToDeleteOrRename,
+  findFolderAndUpdate,
+  responseStatusDetails,
+} from "./utils.js";
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -89,6 +93,81 @@ app.post("/cfe/add-folder", async (req, res) => {
     return responseStatusDetails(res).success();
   }
   return responseStatusDetails(res).badRequestError();
+});
+
+// Delete folders
+// request should be {"userId":"xyz@gmail.com","folder":[{"id": 4,"parentFolders":[1,2,3]}]}
+app.post("/cfe/delete-folder", async (req, res) => {
+  const { userId, folder = [] } = req.body;
+
+  if (!userId) {
+    return responseStatusDetails(res).badRequestError();
+  }
+
+  const dataBaseResponse = await folderModel.find({ u: userId });
+
+  const status = await findToDeleteOrRename(
+    dataBaseResponse[0],
+    folder[0]?.parentFolders,
+    folder[0]?.id,
+    "deleteFolder"
+  );
+  if (status) {
+    dataBaseResponse[0].save();
+    return responseStatusDetails(res).success(status);
+  }
+  return responseStatusDetails(res).internalServerError();
+});
+
+// Rename folders
+// request should be {"userId":"xyz@gmail.com","folder":[{"id": 4,"parentFolders":[1,2,3], "replaceName": "RenamedFolder"}]}
+app.post("/cfe/rename-folder", async (req, res) => {
+  const { userId, folder = [] } = req.body;
+
+  if (!userId) {
+    return responseStatusDetails(res).badRequestError();
+  }
+
+  const dataBaseResponse = await folderModel.find({ u: userId });
+
+  const status = await findToDeleteOrRename(
+    dataBaseResponse[0],
+    folder[0]?.parentFolders,
+    folder[0]?.id,
+    "renameFolder",
+    folder[0]?.replaceName
+  );
+  if (status) {
+    dataBaseResponse[0].save();
+    return responseStatusDetails(res).success(status);
+  }
+  return responseStatusDetails(res).internalServerError();
+});
+
+// Remove Chat
+// request should be {"userId":"xyz@gmail.com","folder":[{"id": 4,"parentFolders":[1,2,3]}, "chatId": 4}
+app.post("/cfe/remove-chat", async (req, res) => {
+  const { userId, folder = [], chatId } = req.body;
+
+  if (!userId) {
+    return responseStatusDetails(res).badRequestError();
+  }
+
+  const dataBaseResponse = await folderModel.find({ u: userId });
+
+  const status = await findToDeleteOrRename(
+    dataBaseResponse[0],
+    folder[0]?.parentFolders,
+    folder[0]?.id,
+    "removeChat",
+    null,
+    chatId
+  );
+  if (status) {
+    dataBaseResponse[0].save();
+    return responseStatusDetails(res).success(status);
+  }
+  return responseStatusDetails(res).internalServerError();
 });
 
 //Add chats
