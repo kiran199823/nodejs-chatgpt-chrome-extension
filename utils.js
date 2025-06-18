@@ -32,8 +32,8 @@ export async function findFolderAndUpdate(
       chatsDetail?.map((chat) => {
         dataBase.ch.push({
           ci: chatId,
-          t: chat.title,
-          u: chat.url,
+          t: chat.t,
+          u: chat.u,
         });
         chatId = chatId + 1;
       });
