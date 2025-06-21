@@ -26,6 +26,7 @@ const folderSchema = new mongoose.Schema({
   cc: Number,
   f: [],
 });
+const folderModel = mongoose.model("tree_structures", folderSchema);
 
 const addUser = async (userId, res) => {
   const addUserId = new folderModel({ u: userId, fc: 0, cc: 0, f: [] });
@@ -63,12 +64,21 @@ const addFolders = async (dataBaseResponse, folderDetails, folderCount) => {
   }
 };
 
-app.get("/", (req, res) => {
-  res.send("hello");
+app.post("/cfe/add-user", async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return responseStatusDetails(res).badRequestError();
+  }
+
+  const dataBaseResponse = await folderModel.find({ u: userId });
+
+  if (!dataBaseResponse?.length) {
+    return addUser(userId, res);
+  }
 });
 
 // Add folders
-const folderModel = mongoose.model("tree_structures", folderSchema);
 app.post("/cfe/add-folder", async (req, res) => {
   const { userId, folder = [] } = req.body;
 
