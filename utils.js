@@ -1,3 +1,69 @@
+// export async function findFolderAndUpdate(
+//   parentFolders,
+//   folderName,
+//   folderCount = 0,
+//   dataBaseResponse,
+//   isAddChat = false,
+//   chatCount = 0,
+//   chatsDetail = []
+// ) {
+//   let dataBase = dataBaseResponse;
+//   parentFolders.map(
+//     (parentId) =>
+//       (dataBase = dataBase?.f?.find((folder) => folder?.i === parentId))
+//   );
+
+//   if (dataBase?.f && !isAddChat) {
+//     const folderId = folderCount + 1;
+//     const lengthOfFolder = dataBase.f.push({
+//       n: folderName,
+//       i: folderId,
+//       f: [],
+//       ch: [],
+//     });
+//     if (lengthOfFolder) {
+//       dataBaseResponse.fc = folderCount + 1;
+//       dataBaseResponse.markModified("f");
+//       return true;
+//     }
+//   } else if (dataBase?.f && isAddChat) {
+//     let chatId = chatCount + 1;
+//     if (chatsDetail.length) {
+//       chatsDetail?.map((chat) => {
+//         dataBase.ch.push({
+//           ci: chatId,
+//           t: chat.t,
+//           u: chat.u,
+//         });
+//         chatId = chatId + 1;
+//       });
+//       dataBaseResponse.cc = chatId;
+//       dataBaseResponse.markModified("f");
+//       return true;
+//     }
+//   }
+
+//   return false;
+// }
+
+export const getStructuredChatDetails = (chatCount, chatsDetails) => {
+  let chatStructure = [];
+  let chatId = chatCount;
+  if (chatsDetails?.length) {
+    chatsDetails?.map((chat) => {
+      chatId = chatId + 1;
+      chatStructure.push({
+        ci: chatId,
+        t: chat.t,
+        u: chat.u,
+      });
+    });
+  }
+
+  const lastChatId = chatId;
+  return { chatStructure, lastChatId };
+};
+
 export async function findFolderAndUpdate(
   parentFolders,
   folderName,
@@ -27,20 +93,26 @@ export async function findFolderAndUpdate(
       return true;
     }
   } else if (dataBase?.f && isAddChat) {
-    let chatId = chatCount + 1;
-    if (chatsDetail.length) {
-      chatsDetail?.map((chat) => {
-        dataBase.ch.push({
-          ci: chatId,
-          t: chat.t,
-          u: chat.u,
-        });
-        chatId = chatId + 1;
-      });
-      dataBaseResponse.cc = chatId;
-      dataBaseResponse.markModified("f");
-      return true;
-    }
+    const { chatStructure, lastChatId } = getStructuredChatDetails(
+      chatCount,
+      chatsDetail
+    );
+    // let chatId = chatCount + 1;
+    // if (chatsDetail.length) {
+    //   chatsDetail?.map((chat) => {
+    //     dataBase.ch.push({
+    //       ci: chatId,
+    //       t: chat.t,
+    //       u: chat.u,
+    //     });
+    //     chatId = chatId + 1;
+    //   });
+    //   dataBaseResponse.cc = chatId;
+    // }
+    dataBase.ch = chatStructure;
+    dataBaseResponse.cc = lastChatId;
+    dataBaseResponse.markModified("f");
+    return true;
   }
 
   return false;
