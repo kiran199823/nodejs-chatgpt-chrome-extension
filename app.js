@@ -183,27 +183,24 @@ app.post("/cfe/remove-chat", async (req, res) => {
 //Add chats
 app.post("/cfe/add-chat", async (req, res) => {
   const { userId, chats = [], parentFolders = [] } = req.body;
-  if (!userId || !chats.length)
-    return responseStatusDetails(res).badRequestError();
+  if (!userId) return responseStatusDetails(res).badRequestError();
 
   const dataBaseResponse = await folderModel.find({ u: userId });
   if (!dataBaseResponse) return responseStatusDetails(res).notFound();
 
-  if (chats.length) {
-    const { cc: chatCount } = dataBaseResponse[0];
-    const status = await findFolderAndUpdate(
-      parentFolders,
-      null,
-      null,
-      dataBaseResponse[0],
-      true,
-      chatCount,
-      chats
-    );
-    if (!status) return responseStatusDetails(res).internalServerError();
-    await dataBaseResponse[0].save();
-    return responseStatusDetails(res).success();
-  }
+  const { cc: chatCount } = dataBaseResponse[0];
+  const status = await findFolderAndUpdate(
+    parentFolders,
+    null,
+    null,
+    dataBaseResponse[0],
+    true,
+    chatCount,
+    chats
+  );
+  if (!status) return responseStatusDetails(res).internalServerError();
+  await dataBaseResponse[0].save();
+  return responseStatusDetails(res).success();
 });
 
 app.post("/cfe/folder-list", async (req, res) => {
