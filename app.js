@@ -220,7 +220,6 @@ app.post("/cfe/folder-list", async (req, res) => {
 //Add Report or Feedback
 app.post("/cfe/report", async (req, res) => {
   const { userId, message } = req.body;
-  console.log("message: ", message);
   if (!userId) return responseStatusDetails(res).badRequestError();
 
   const dataBaseResponse = await folderModel.find({ u: userId });
