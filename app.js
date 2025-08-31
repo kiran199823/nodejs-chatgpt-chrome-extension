@@ -25,11 +25,12 @@ const folderSchema = new mongoose.Schema({
   fc: Number,
   cc: Number,
   f: [],
+  r: [],
 });
 const folderModel = mongoose.model("tree_structures", folderSchema);
 
 const addUser = async (userId, res) => {
-  const addUserId = new folderModel({ u: userId, fc: 0, cc: 0, f: [] });
+  const addUserId = new folderModel({ u: userId, fc: 0, cc: 0, f: [], r: [] });
   const { u: addedUserId } = await addUserId.save();
 
   if (!addedUserId) {
@@ -214,6 +215,21 @@ app.post("/cfe/folder-list", async (req, res) => {
   const responseBody = dataBaseResponse[0].f;
 
   responseStatusDetails(res).success(responseBody);
+});
+
+//Add Report or Feedback
+app.post("/cfe/report", async (req, res) => {
+  const { userId, message } = req.body;
+  console.log("message: ", message);
+  if (!userId) return responseStatusDetails(res).badRequestError();
+
+  const dataBaseResponse = await folderModel.find({ u: userId });
+  if (!dataBaseResponse) return responseStatusDetails(res).notFound();
+
+  const status = dataBaseResponse[0].r.push(message);
+  console.log("status: ", status);
+  await dataBaseResponse[0].save();
+  return responseStatusDetails(res).success();
 });
 
 app.listen(PORT, () => {
